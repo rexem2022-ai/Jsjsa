@@ -1,0 +1,622 @@
+
+-- VALADOPT — локальная демонстрационная панель для Roblox Studio
+-- Вставьте этот LocalScript в StarterPlayer > StarterPlayerScripts.
+-- Все действия работают только внутри этой демонстрации.
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local old = playerGui:FindFirstChild("ValadoptLocalDemo")
+if old then old:Destroy() end
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "ValadoptLocalDemo"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = playerGui
+
+local C = {
+    bg = Color3.fromRGB(22, 23, 29),
+    panel = Color3.fromRGB(31, 33, 41),
+    panel2 = Color3.fromRGB(39, 41, 51),
+    line = Color3.fromRGB(65, 68, 82),
+    white = Color3.fromRGB(248, 248, 252),
+    muted = Color3.fromRGB(166, 169, 181),
+    yellow = Color3.fromRGB(255, 207, 62),
+    green = Color3.fromRGB(93, 214, 139),
+    red = Color3.fromRGB(238, 95, 105),
+    blue = Color3.fromRGB(104, 160, 255),
+}
+
+local function corner(obj, radius)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, radius or 8)
+    c.Parent = obj
+end
+
+local function outline(obj, color, thickness)
+    local s = Instance.new("UIStroke")
+    s.Color = color or C.line
+    s.Thickness = thickness or 1
+    s.Parent = obj
+end
+
+local function text(parent, value, size, bold, color)
+    local t = Instance.new("TextLabel")
+    t.BackgroundTransparency = 1
+    t.Text = value
+    t.TextColor3 = color or C.white
+    t.Font = bold and Enum.Font.GothamBold or Enum.Font.Gotham
+    t.TextSize = size or 13
+    t.TextXAlignment = Enum.TextXAlignment.Left
+    t.TextYAlignment = Enum.TextYAlignment.Center
+    t.TextWrapped = true
+    t.Parent = parent
+    return t
+end
+
+local function button(parent, value, callback, width)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(width or 1, 0, 0, 32)
+    b.BackgroundColor3 = C.panel2
+    b.Text = value
+    b.TextColor3 = C.white
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 12
+    b.AutoButtonColor = true
+    b.Parent = parent
+    corner(b, 7)
+    outline(b)
+    b.Activated:Connect(callback or function() end)
+    return b
+end
+
+local function input(parent, placeholder, initial)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 34)
+    box.BackgroundColor3 = C.bg
+    box.Text = initial or ""
+    box.PlaceholderText = placeholder or ""
+    box.PlaceholderColor3 = C.muted
+    box.TextColor3 = C.white
+    box.Font = Enum.Font.Gotham
+    box.TextSize = 13
+    box.ClearTextOnFocus = false
+    box.Parent = parent
+    corner(box, 7)
+    outline(box)
+    return box
+end
+
+local function section(parent, titleText)
+    local holder = Instance.new("Frame")
+    holder.BackgroundColor3 = C.panel
+    holder.Size = UDim2.new(1, 0, 0, 10)
+    holder.AutomaticSize = Enum.AutomaticSize.Y
+    holder.Parent = parent
+    corner(holder, 9)
+    outline(holder)
+
+    local pad = Instance.new("UIPadding")
+    pad.PaddingTop = UDim.new(0, 10)
+    pad.PaddingBottom = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 10)
+    pad.PaddingRight = UDim.new(0, 10)
+    pad.Parent = holder
+
+    local list = Instance.new("UIListLayout")
+    list.Padding = UDim.new(0, 7)
+    list.SortOrder = Enum.SortOrder.LayoutOrder
+    list.Parent = holder
+
+    local heading = text(holder, titleText, 13, true, C.yellow)
+    heading.Size = UDim2.new(1, 0, 0, 22)
+    return holder
+end
+
+local function label(parent, value)
+    local l = text(parent, value, 12, true, C.muted)
+    l.Size = UDim2.new(1, 0, 0, 18)
+    return l
+end
+
+-- Главное окно
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.fromOffset(610, 430)
+main.Position = UDim2.new(0.5, -305, 0.5, -215)
+main.BackgroundColor3 = C.bg
+main.Parent = gui
+corner(main, 12)
+outline(main, Color3.fromRGB(87, 90, 107), 1.4)
+
+local top = Instance.new("Frame")
+top.Size = UDim2.new(1, 0, 0, 48)
+top.BackgroundColor3 = C.panel
+top.Parent = main
+corner(top, 12)
+
+local title = text(top, "ТГК: valadopt", 17, true)
+title.Position = UDim2.fromOffset(16, 0)
+title.Size = UDim2.new(1, -60, 1, 0)
+title.TextStrokeColor3 = Color3.new(0, 0, 0)
+title.TextStrokeTransparency = 0
+
+local close = button(top, "×", function()
+    gui:Destroy()
+end, 0)
+close.Size = UDim2.fromOffset(32, 30)
+close.Position = UDim2.new(1, -42, 0, 9)
+close.BackgroundColor3 = Color3.fromRGB(120, 49, 57)
+close.TextSize = 18
+
+local tabs = Instance.new("Frame")
+tabs.Position = UDim2.fromOffset(12, 58)
+tabs.Size = UDim2.new(0, 112, 1, -70)
+tabs.BackgroundColor3 = C.panel
+tabs.Parent = main
+corner(tabs, 9)
+outline(tabs)
+
+local tabList = Instance.new("UIListLayout")
+tabList.Padding = UDim.new(0, 6)
+tabList.SortOrder = Enum.SortOrder.LayoutOrder
+tabList.Parent = tabs
+
+local tabPad = Instance.new("UIPadding")
+tabPad.PaddingTop = UDim.new(0, 8)
+tabPad.PaddingLeft = UDim.new(0, 7)
+tabPad.PaddingRight = UDim.new(0, 7)
+tabPad.Parent = tabs
+
+local content = Instance.new("Frame")
+content.Position = UDim2.fromOffset(136, 58)
+content.Size = UDim2.new(1, -148, 1, -70)
+content.BackgroundTransparency = 1
+content.Parent = main
+
+local pages = {}
+local tabButtons = {}
+
+local function makePage(name)
+    local page = Instance.new("ScrollingFrame")
+    page.Name = name
+    page.Size = UDim2.fromScale(1, 1)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = C.muted
+    page.CanvasSize = UDim2.new()
+    page.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    page.Visible = false
+    page.Parent = content
+
+    local lay = Instance.new("UIListLayout")
+    lay.Padding = UDim.new(0, 8)
+    lay.SortOrder = Enum.SortOrder.LayoutOrder
+    lay.Parent = page
+
+    pages[name] = page
+    return page
+end
+
+local function showPage(name)
+    for n, p in pairs(pages) do
+        p.Visible = (n == name)
+    end
+
+    for n, b in pairs(tabButtons) do
+        b.BackgroundColor3 = n == name
+            and Color3.fromRGB(75, 67, 45)
+            or C.panel2
+    end
+end
+
+for _, name in ipairs({
+    "Control",
+    "Players",
+    "Pets",
+    "Users",
+    "Settings",
+    "Spawner"
+}) do
+    local b = button(tabs, name, function()
+        showPage(name)
+    end)
+
+    b.Size = UDim2.new(1, 0, 0, 34)
+    b.TextXAlignment = Enum.TextXAlignment.Left
+    b.Text = "   " .. name
+    tabButtons[name] = b
+    makePage(name)
+end
+
+showPage("Control")
+
+-- Локальное состояние демонстрации
+local partner = "Va1enn0"
+local specterCount = 0
+local autoSpecter = false
+local demoPets = {}
+local chatLog = {}
+local selectedPet = "Unicorn"
+local tradeStatus = "Ожидание"
+
+local userList = {
+    "JenYAsha",
+    "Valenq", "Miaxie", "Lun4ri", "Sofiyka", "KislyMoon",
+    "VelvetFox", "Ariellq", "MochiStar", "NikaBloom",
+    "CloudyVibe", "MilkyRose", "L0velyCat", "Rinnyx",
+    "MoonVel", "PinkSora", "Liliq", "DreamyBee",
+    "FoxyMimi", "AstraVee", "CherryLuv", "Nellyx",
+    "BunnyMia", "StarryNika", "KiraMoon", "VioletSky",
+    "MimiCloud", "Angelq", "SunnyL0ve", "Mellory",
+    "PixieV", "LunaBerry", "SakuraXo", "TiffyMoon",
+    "RosieVibe", "MilaNova", "SweetNari", "CloudyMochi",
+    "YukiBloom", "LollyFox", "AmiStar", "Veloura",
+    "NekoMimi", "PinkNova", "BibiLuv", "MistyRose",
+    "Zariq", "HoneyVee", "LumiBun", "KawaiiNox",
+    "EllyDream",
+    "XxMellia", "KiraBun", "Lunessa", "MiaCherry",
+    "SnowyVex", "AriMoon", "NoxiStar", "LiliBerry",
+    "MochiVee", "RoxyBloom", "YunaX", "PinkMell",
+    "SofiLuv", "NariFox", "CloudyLia", "MimiNova",
+    "KokoStar", "VexyMoon", "RosaliaX", "BunnyLuxe",
+    "AmiCherry", "LunaFrost", "MistyNeko", "ZuzuBloom",
+    "NikaVex", "MellowSky", "ToriLuv", "KiraNova",
+    "MilkyNox", "SoraBerry", "EllieVex", "MiaFrost",
+    "YukiLuxe", "PinkKoko", "NellyMoon", "AstraBun",
+    "LumiCherry", "ViviCloud", "RinaStar", "MochiLuxe",
+    "SukiNova", "FoxyLia", "MilaVex", "CherryNox",
+    "AmiLuna", "BibiStar", "NoraBloom", "VelviX",
+    "KikiFrost", "YunaBerry"
+}
+
+local quickMessages = {
+    "привет я хочу бустик",
+    "можно на буст?",
+    "я подписана",
+    "это я",
+    "да",
+    "нет",
+    "я доверяю тебе",
+    "я подписана на тгк",
+    "верни петов",
+    "привет кисуль",
+    "можно фр совушку?",
+    "Я В ШОКЕ",
+    "ЭТО Я РЕБЯТА",
+    "ОН РИЛ ОТДАЕТ",
+    "ЭТО НЕ СКАМ Я В ШОКЕ",
+    "АФИГЕТЬ",
+    "ЛУЧШИЙ БУСТЕР",
+    "ЭТО НЕ СОН Я В ШОКЕ",
+    "Я МЕЧТАЛА О ЭТИХ ПЕТАХ",
+    "У МЕНЯ РУКИ ТРЯСУТЬСЯ"
+}
+
+local petNames = {
+    "Jester Dragon",
+    "Unicorn",
+    "Candicorn",
+    "Strawberry Tortle",
+    "Zombie Wolf",
+    "Arctic Fox",
+    "Polar Bear",
+    "Sea Turtle",
+    "Copycat",
+    "Panda",
+    "Count Slothula",
+    "Snow Monkey",
+    "Swan",
+    "Hippo",
+    "Axolotl"
+}
+
+local function updateTrade()
+    tradeStatus = "Питомцев в демо-обмене: " .. #demoPets
+end
+
+-- CONTROL
+do
+    local p = pages.Control
+    local a = section(p, "Trade controls")
+
+    label(a, "Username")
+    local userBox = input(a, "Username", "Va1enn0")
+
+    userBox.FocusLost:Connect(function()
+        partner = userBox.Text ~= "" and userBox.Text or "Va1enn0"
+    end)
+
+    local status = text(a, "Статус: " .. tradeStatus, 12, true, C.green)
+    status.Size = UDim2.new(1, 0, 0, 22)
+
+    local function refresh()
+        status.Text = "Статус: " .. tradeStatus
+    end
+
+    button(a, "Start Trade", function()
+        tradeStatus = "Локальная сделка с " .. partner
+        refresh()
+    end)
+
+    button(a, "Accept 1", function()
+        tradeStatus = "Визуально принято (этап 1)"
+        refresh()
+    end)
+
+    button(a, "Accept 2", function()
+        tradeStatus = "Визуально принято (этап 2)"
+        refresh()
+    end)
+
+    button(a, "Specter", function()
+        specterCount = 0
+        tradeStatus = "Specter: 0"
+        refresh()
+    end)
+
+    button(a, "Accept", function()
+        tradeStatus = "Принято локально"
+        refresh()
+    end)
+
+    button(a, "Unaccept", function()
+        tradeStatus = "Ожидание подтверждения"
+        refresh()
+    end)
+
+    button(a, "Add Random Item", function()
+        table.insert(demoPets, petNames[math.random(1, #petNames)])
+        updateTrade()
+        refresh()
+    end)
+
+    button(a, "Clear Trade", function()
+        table.clear(demoPets)
+        updateTrade()
+        refresh()
+    end)
+
+    button(a, "Block Player", function()
+        tradeStatus = partner .. " добавлен в локальный список блокировки"
+        refresh()
+    end)
+
+    local auto = button(a, "Auto Specter: OFF", function()
+        autoSpecter = not autoSpecter
+        auto.Text = autoSpecter and "Auto Specter: ON" or "Auto Specter: OFF"
+    end)
+
+    local counter = text(a, "Specter viewers: 0 / 15", 12, true, C.yellow)
+    counter.Size = UDim2.new(1, 0, 0, 22)
+
+    task.spawn(function()
+        local ticks = 0
+
+        while gui.Parent do
+            task.wait(2)
+
+            if autoSpecter then
+                specterCount = math.min(15, specterCount + 1)
+                ticks += 2
+
+                if ticks >= 9 then
+                    specterCount = math.max(0, specterCount - 2)
+                    ticks = 0
+                end
+
+                counter.Text = "Specter viewers: " .. specterCount .. " / 15"
+            end
+        end
+    end)
+
+    local list = section(p, "Current local offer")
+    local offer = text(list, "Пока пусто", 12, false, C.white)
+    offer.Size = UDim2.new(1, 0, 0, 70)
+
+    task.spawn(function()
+        while gui.Parent do
+            task.wait(0.25)
+            offer.Text = #demoPets > 0
+                and table.concat(demoPets, "\n")
+                or "Пока пусто"
+        end
+    end)
+end
+
+-- PLAYERS
+do
+    local p = pages.Players
+    local a = section(p, "Players")
+
+    label(a, "Search Players (name)")
+    local search = input(a, "Введите имя игрока", "")
+
+    local result = text(a, "Локальный список демо-пользователей", 12, false, C.muted)
+    result.Size = UDim2.new(1, 0, 0, 24)
+
+    button(a, "Select Partner From Trade", function()
+        partner = search.Text ~= "" and search.Text or partner
+        result.Text = "Выбран партнёр: " .. partner
+    end)
+
+    button(a, "Search", function()
+        result.Text = search.Text ~= ""
+            and ("Поиск в демо: " .. search.Text)
+            or "Введите имя для поиска"
+    end)
+end
+
+-- PETS — локальная демонстрация
+do
+    local p = pages.Pets
+    local a = section(p, "Pets — local demo")
+
+    label(a, "Питомец для визуального добавления")
+    local petInput = input(a, "Название питомца", "Unicorn")
+
+    button(a, "Add pet to demo offer", function()
+        table.insert(
+            demoPets,
+            petInput.Text ~= "" and petInput.Text or "Unicorn"
+        )
+        updateTrade()
+    end)
+
+    local note = text(
+        a,
+        "Эта вкладка работает только с локальным списком демонстрации.",
+        12,
+        false,
+        C.muted
+    )
+    note.Size = UDim2.new(1, 0, 0, 42)
+end
+
+-- USERS
+do
+    local p = pages.Users
+    local a = section(p, "Users")
+
+    label(a, "Search users")
+    local search = input(a, "Поиск ника", "")
+
+    local userResult = text(a, "Всего ников: " .. #userList, 12, true, C.muted)
+    userResult.Size = UDim2.new(1, 0, 0, 22)
+
+    button(a, "Search users", function()
+        local found = {}
+
+        for _, n in ipairs(userList) do
+            if search.Text == ""
+                or string.find(string.lower(n), string.lower(search.Text), 1, true)
+            then
+                table.insert(found, n)
+            end
+        end
+
+        userResult.Text = #found > 0
+            and table.concat(found, ", ")
+            or "Ничего не найдено"
+    end)
+
+    label(a, "Chat Messages")
+    local chatBox = input(a, "Сообщение для локального демо-чата", "")
+
+    local chatView = text(a, "Локальный чат пока пуст.", 12, false, C.white)
+    chatView.Size = UDim2.new(1, 0, 0, 90)
+
+    local function sendLocal(message)
+        if message and message ~= "" then
+            table.insert(chatLog, partner .. ": " .. message)
+            chatView.Text = table.concat(chatLog, "\n")
+            chatBox.Text = ""
+        end
+    end
+
+    button(a, "Send Chat Message", function()
+        sendLocal(chatBox.Text)
+    end)
+
+    local q = section(p, "Quick messages")
+
+    for _, msg in ipairs(quickMessages) do
+        button(q, msg, function()
+            sendLocal(msg)
+        end)
+    end
+
+    local u = section(p, "Nickname list")
+    local names = text(u, table.concat(userList, "  •  "), 11, false, C.white)
+    names.Size = UDim2.new(1, 0, 0, 220)
+    names.TextYAlignment = Enum.TextYAlignment.Top
+end
+
+-- SETTINGS
+do
+    local p = pages.Settings
+    local a = section(p, "Settings")
+
+    local scale = text(a, "Размер интерфейса: обычный", 12, true, C.muted)
+    scale.Size = UDim2.new(1, 0, 0, 22)
+
+    button(a, "Small", function()
+        main.Size = UDim2.fromOffset(540, 390)
+        main.Position = UDim2.new(0.5, -270, 0.5, -195)
+        scale.Text = "Размер интерфейса: Small"
+    end)
+
+    button(a, "Big", function()
+        main.Size = UDim2.fromOffset(700, 500)
+        main.Position = UDim2.new(0.5, -350, 0.5, -250)
+        scale.Text = "Размер интерфейса: Big"
+    end)
+end
+
+-- SPAWNER — только список для локального предпросмотра
+do
+    local p = pages.Spawner
+    local a = section(p, "Pet list — local preview")
+
+    local picked = text(a, "Выбран: " .. selectedPet, 12, true, C.yellow)
+    picked.Size = UDim2.new(1, 0, 0, 22)
+
+    for _, pet in ipairs(petNames) do
+        button(a, pet, function()
+            selectedPet = pet
+            picked.Text = "Выбран: " .. selectedPet
+        end)
+    end
+
+    local note = text(
+        a,
+        "Выбор меняет только подпись в этой демонстрации.",
+        11,
+        false,
+        C.muted
+    )
+    note.Size = UDim2.new(1, 0, 0, 30)
+end
+
+-- Перемещение окна мышью и касанием
+do
+    local dragging, dragStart, startPos
+
+    top.InputBegan:Connect(function(inputObj)
+        if inputObj.UserInputType == Enum.UserInputType.MouseButton1
+            or inputObj.UserInputType == Enum.UserInputType.Touch
+        then
+            dragging = true
+            dragStart = inputObj.Position
+            startPos = main.Position
+        end
+    end)
+
+    top.InputChanged:Connect(function(inputObj)
+        if dragging
+            and (
+                inputObj.UserInputType == Enum.UserInputType.MouseMovement
+                or inputObj.UserInputType == Enum.UserInputType.Touch
+            )
+        then
+            local delta = inputObj.Position - dragStart
+            main.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+
+    top.InputEnded:Connect(function(inputObj)
+        if inputObj.UserInputType == Enum.UserInputType.MouseButton1
+            or inputObj.UserInputType == Enum.UserInputType.Touch
+        then
+            dragging = false
+        end
+    end)
+end
